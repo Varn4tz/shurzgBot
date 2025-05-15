@@ -10,7 +10,12 @@ TELEGRAM_BOT_TOKEN = "7269296463:AAGbXFouq_LR5MAOhwHvD-d5rSm1ljv-L2M"
 TELEGRAM_CHAT_ID = "381376140"
 
 CHECK_INTERVAL_SECONDS = 300   # ✅ по умолчанию 5 минут
-BAN_MESSAGE = "В данный момент этот канал недоступен из-за нарушения Правил сообщества или Условий продаж Twitch."
+
+# ✅ Новый универсальный список фраз для обнаружения блокировки
+BAN_MESSAGES = [
+    "This channel is currently unavailable due to a violation of",
+    "В данный момент этот канал недоступен из-за нарушения Правил сообщества или Условий продаж Twitch."
+]
 
 last_status = None  # глобальное хранение статуса
 
@@ -24,7 +29,7 @@ async def check_twitch_ban_and_screenshot():
             await page.screenshot(path="screenshot.png")
             content = await page.content()
             await browser.close()
-            return (BAN_MESSAGE in content)
+            return any(msg in content for msg in BAN_MESSAGES)
     except Exception as e:
         print(f"[Ошибка Twitch] {e}")
         return None
@@ -43,7 +48,7 @@ async def twitch_monitor(context: ContextTypes.DEFAULT_TYPE):
         print(f"[Twitch Monitor] Первый запуск. Статус: {'Забанен' if is_banned else 'Разбанен'}")
         return
 
-    # ✅ Уведомить 10 раз если статус изменился с забанен на разбанен
+    # ✅ 10 уведомлений + скриншот при изменении на разбанен
     if last_status and not is_banned:
         for _ in range(10):
             await context.bot.send_message(chat_id=TELEGRAM_CHAT_ID, text="✅ Twitch канал снова доступен!")
@@ -92,7 +97,7 @@ async def time_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             raise ValueError
         CHECK_INTERVAL_SECONDS = minutes * 60
 
-        # ✅ Удаляем все старые задачи и запускаем новую
+        # ✅ перезапуск задачи мониторинга
         context.application.job_queue.scheduler.remove_all_jobs()
         context.application.job_queue.run_repeating(twitch_monitor, interval=CHECK_INTERVAL_SECONDS, first=0)
 
@@ -110,7 +115,7 @@ def main():
     app.add_handler(CommandHandler("screenshot", screenshot_command))
     app.add_handler(CommandHandler("time", time_command))
 
-    # ✅ Запуск мониторинга через JobQueue
+    # ✅ запуск фонового мониторинга
     app.job_queue.run_repeating(twitch_monitor, interval=CHECK_INTERVAL_SECONDS, first=0)
 
     print("[Telegram] Бот слушает команды...")
