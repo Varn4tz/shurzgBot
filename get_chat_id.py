@@ -1,12 +1,12 @@
 from telegram import Update
-from telegram.ext import ApplicationBuilder, MessageHandler, filters
+from telegram.ext import ApplicationBuilder, CommandHandler
 
-BOT_TOKEN = '7269296463:AAGbXFouq_LR5MAOhwHvD-d5rSm1ljv-L2M'
+BOT_TOKEN = "ВАШ_ТОКЕН"
 
-async def handle_message(update: Update, context):
-    print(f"Ваш chat_id: {update.effective_chat.id}")
-    await update.message.reply_text(f"Ваш chat_id: {update.effective_chat.id}")
+def main():
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    app.add_handler(CommandHandler("start", lambda u, c: u.message.reply_text(f"Ваш chat_id: {u.effective_chat.id}")))
+    app.run_polling()
 
-app = ApplicationBuilder().token(BOT_TOKEN).build()
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-app.run_polling()
+if __name__ == "__main__":
+    main()
