@@ -26,4 +26,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Команда запуска бота
-CMD ["python", "bot.py"]
+CMD ["python", "twitch_bot.py"]
